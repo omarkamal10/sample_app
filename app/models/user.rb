@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  has_many :microposts, dependent: :destroy
   attr_accessor :remember_token, :activation_token
   before_create :create_activation_digest
   before_save { self.email = email.downcase }
@@ -30,7 +31,7 @@ class User < ApplicationRecord
   end
 
   # Returns true if the given token matches the digest.
-  def authenticated?(attribute,token)
+  def authenticated?(attribute, token)
     digest = send("#{attribute}_digest")
     return false if digest.nil?
     BCrypt::Password.new(digest).is_password?(token)
@@ -43,7 +44,7 @@ class User < ApplicationRecord
   end
   
   
-    # Activates an account.
+  # Activates an account.
   def activate
     update_attribute(:activated, true)
     update_attribute(:activated_at, Time.zone.now)
@@ -54,6 +55,12 @@ class User < ApplicationRecord
     UserMailer.account_activation(self).deliver_now
   end
   
+  
+    # Defines a proto-feed.
+  # See "Following users" for the full implementation.
+  def feed
+    Micropost.where("user_id = ?", id)
+  end
   
   
     private
